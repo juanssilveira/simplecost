@@ -55,7 +55,7 @@ const neverHidden = (th: Thresholds, kind: string) => !th[kind]?.[0]
 const level = (t: Range | undefined, pct: number): Level =>
   !t ? 'normal' : pct < t[0] ? 'hidden' : pct < t[1] ? 'normal' : pct < t[2] ? 'warning' : 'error'
 
-const UNITS: [string, number][] = [['d', 86400000], ['h', 3600000], ['m', 60000]]
+const UNITS = [['d', 86400000], ['h', 3600000], ['m', 60000]] as const
 
 // Time until a window resets, rounded down: '2d', '3h', '40m', at least '1m'. None once it has passed.
 const left = (resetsAt: string | undefined, now: number): Left | undefined => {
@@ -105,8 +105,8 @@ const RANK: Level[] = ['normal', 'warning', 'error']
 // The last one left is cut instead.
 const fit = (shown: Item[], room: number): Item[] => {
   if (shown.length < 2 || width(shown) <= room) return shown
-  const drop = shown.reduce((d, i, n) => (RANK.indexOf(i.level) <= RANK.indexOf(shown[d].level) ? n : d), 0)
-  return fit(shown.filter((_, n) => n !== drop), room)
+  const drop = shown.reduce((d, i) => (RANK.indexOf(i.level) <= RANK.indexOf(d.level) ? i : d))
+  return fit(shown.filter(i => i !== drop), room)
 }
 
 // auto -> hidden -> always shown -> auto. Items that never hide on auto skip that step.
