@@ -230,21 +230,51 @@ test('a narrow line drops gray items first, then yellow, and keeps the red', asy
     const ui = await $.ui.mount({ ...HINT, props, ...(columns && { viewport: { columns, rows: 24 } }) })
     const found = (await ui.find({ type: 'Text' })) as Found
     await ui.unmount()
-    return found?.text
+    return found?.text?.replace(/ · $/, '')
   }
   const ALL = '🧠 45% • 🕔 30% • 📅 92% (2d) • $1.50'
 
-  // 37 cells of items, a gap of 2 and '? for shortcuts'.
+  // 37 cells of items, the ' · ' and '? for shortcuts'.
   expect(await line()).toBe(ALL)
-  expect(await line(54)).toBe(ALL)
-  expect(await line(53)).toBe('🧠 45% • 🕔 30% • 📅 92% (2d)')
+  expect(await line(55)).toBe(ALL)
+  expect(await line(54)).toBe('🧠 45% • 🕔 30% • 📅 92% (2d)')
   expect(await line(40)).toBe('🧠 45% • 📅 92% (2d)')
   expect(await line(30)).toBe('📅 92% (2d)')
   expect(await line(10)).toBe('📅 92% (2d)')
   // '(shift+tab to cycle)' comes with the permission-mode label, which takes 25 more.
-  expect(await line(81, HINT.props.hint)).toBe(ALL)
-  expect(await line(80, HINT.props.hint)).toBe('🧠 45% • 🕔 30% • 📅 92% (2d)')
+  expect(await line(80, HINT.props.hint)).toBe(ALL)
+  expect(await line(79, HINT.props.hint)).toBe('🧠 45% • 🕔 30% • 📅 92% (2d)')
   expect(await line(54, HINT.props.hint)).toBe('📅 92% (2d)')
+})
+
+test('a dot separates the line from the hint only when both are drawn', async ($, on) => {
+  mock.store(on)
+  on('session.measure', (_, e) => ({ changed: e.changed }))
+  on('command.register', (_, e) => ({ value: { command: e.name } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await $.session.measure(measure({ ctx: 20 }))
+
+  const drawn = async (hint: string) => {
+    const ui = await $.ui.mount({ ...HINT, props: { ...HINT.props, hint } })
+    const dot = await ui.find({ type: 'Text', text: /^ · $/ })
+    const right = (await ui.find({ type: 'Text', text: /shell/ })) as Found
+    await ui.unmount()
+    return { dot: !!dot, right: right?.text }
+  }
+
+  expect(await drawn('1 shell')).toEqual({ dot: true, right: '1 shell' })
+  // The separator the engine leaves after the cycle hint is not drawn as well.
+  expect(await drawn('(shift+tab to cycle) · 1 shell')).toEqual({ dot: true, right: '1 shell' })
+  expect((await drawn('')).dot).toBe(false)
+  expect((await drawn('   ')).dot).toBe(false)
+  expect((await drawn('(shift+tab to cycle)')).dot).toBe(false)
+  expect((await drawn('(shift+tab to cycle) · ')).dot).toBe(false)
+
+  // Nothing on the left to separate from.
+  await $.session.measure(measure({ ctx: 5 }))
+  for (const args of ['5h', 'cost']) await $.command.run({ command: 'toggle', args })
+  expect(await drawn('1 shell')).toEqual({ dot: false, right: '1 shell' })
 })
 
 test('the time left ticks down while nothing is measured', async ($, on) => {

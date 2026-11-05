@@ -96,6 +96,10 @@ const width = (shown: Item[]) =>
 
 // The engine adds this hint only beside the permission-mode label.
 const CYCLE = /\s*\(shift\+tab to cycle\)/i
+// With that hint gone, the engine's separator after it is left dangling.
+const DANGLING = /^[\s·]+|[\s·]+$/g
+// The same one the engine draws after the permission-mode label.
+const BEFORE_HINT = ' · '
 // That label and a space: '⏵⏵ bypass permissions on' is the longest.
 const LABEL = 25
 
@@ -153,11 +157,11 @@ export const register: Register = (on, options) => {
     // Only a window that says when it resets needs the time.
     const now = u.rateLimits.some(l => l.resetsAt) ? await $.clock.now() : 0
     // The permission-mode label is drawn by Claude Code outside this component; only the hints arrive here.
-    const hint = e.props.hint.replace(CYCLE, '').trim()
+    const hint = e.props.hint.replace(CYCLE, '').replace(DANGLING, '')
     const { Box, Text } = $.ui.resolve(e)
     const all = items(th, u, m, now)
-    // The hint, the gap of 2 before it and the permission-mode label take their share of the row.
-    const taken = cells(hint) + 2 + (CYCLE.test(e.props.hint) ? LABEL : 0)
+    // The hint, the separator before it and the permission-mode label take their share of the row.
+    const taken = (hint ? cells(BEFORE_HINT + hint) : 0) + (CYCLE.test(e.props.hint) ? LABEL : 0)
     const shown = e.viewport ? fit(all, e.viewport.columns - taken) : all
     // Nothing is measured while the session sits idle, so redraw when the time left ticks down.
     const wait = Math.min(...all.map(i => i.resets?.ms ?? Infinity))
@@ -165,13 +169,14 @@ export const register: Register = (on, options) => {
     redraw = wait < Infinity ? $.clock.after(wait, () => $.ui.invalidate('ui.render')) : undefined
 
     return (
-      <Box flexDirection="row" justifyContent="space-between" gap={2}>
+      <Box flexDirection="row">
         <Text wrap="truncate-end">
           {shown.flatMap((i, n) => [
             n > 0 && <Text dimColor> • </Text>,
             i.level === 'normal' ? <Text dimColor>{i.text}</Text> : <Text color={i.level}>{i.text}</Text>,
             i.resets && <Text dimColor>{` (${i.resets.text})`}</Text>,
           ])}
+          {hint !== '' && shown.length > 0 && <Text dimColor>{BEFORE_HINT}</Text>}
         </Text>
         <Text dimColor wrap="truncate-start">{hint}</Text>
       </Box>
