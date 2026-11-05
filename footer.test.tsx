@@ -2,7 +2,7 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 
 const HINT = {
-  plugin: 'footersplit',
+  plugin: 'simplecost',
   component: 'PromptHint',
   requestId: 'hint',
   surface: 'terminal',

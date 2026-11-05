@@ -3,9 +3,9 @@ import type { EngineInterface, PluginOptions, Register, Timer } from 'claude-cod
 
 import type { Modes, Usage } from '../types'
 
-const usage = atom({ plugin: 'footersplit', key: 'measured' } as const, null)
+const usage = atom({ plugin: 'simplecost', key: 'measured' } as const, null)
 // null until read from the store: /clear starts $.state over and no session.start follows it.
-const modes = atom({ plugin: 'footersplit', key: 'modes' } as const, null)
+const modes = atom({ plugin: 'simplecost', key: 'modes' } as const, null)
 
 const getModes = async ($: EngineInterface): Promise<Modes> =>
   (await read($, modes)) ??

@@ -1,6 +1,6 @@
 {
-  "name": "footersplit",
+  "name": "simplecost",
   "description": "Compact usage line for the Claude Code prompt footer",
   "owner": { "name": "juanssilveira" },
-  "plugins": [{ "name": "footersplit", "source": "./" }]
+  "plugins": [{ "name": "simplecost", "source": "./" }]
 }
